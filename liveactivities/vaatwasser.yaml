@@ -1,1 +1,82 @@
-
+alias: Vaatwasser Live Activity
+description: Start, update en sluit de Live Activity op basis van de vaatwasserstatus
+triggers:
+  - trigger: state
+    entity_id: binary_sensor.vaatwasser_aan
+    to: "on"
+    id: start
+  - trigger: state
+    entity_id: sensor.014060393992006921_bsh_common_option_programprogress
+    id: update
+  - trigger: state
+    entity_id: binary_sensor.vaatwasser_aan
+    to: "off"
+    id: klaar
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: klaar
+        sequence:
+          - action: notify.x
+            data:
+              message: clear_notification
+              data:
+                tag: vaatwasser
+      - conditions:
+          - condition: trigger
+            id: update
+          - condition: state
+            entity_id: binary_sensor.vaatwasser_aan
+            state: "on"
+          - condition: template
+            value_template: >-
+              {{ (now() -
+              states.binary_sensor.vaatwasser_aan.last_changed).total_seconds()
+              > 30 }}
+        sequence:
+          - action: notify.x
+            data:
+              title: Vaatwasser
+              message: >-
+                {% set t =
+                [((as_timestamp(states('sensor.014060393992006921_bsh_common_option_remainingprogramtime'),
+                0) - as_timestamp(now())) / 60) | int, 0] | max %}{% set u = t
+                // 60 %}{% set m = t % 60 %}Resterend: {% if u > 0 %}{{ u }}u {%
+                endif %}{{ m }}m
+              data:
+                tag: vaatwasser
+                live_update: true
+                progress: >-
+                  {{
+                  states('sensor.014060393992006921_bsh_common_option_programprogress')
+                  | int(0) }}
+                progress_max: 100
+                notification_icon: mdi:dishwasher
+                notification_icon_color: "#26C6DA"
+                silent: true
+    default:
+      - condition: state
+        entity_id: binary_sensor.vaatwasser_aan
+        state: "on"
+      - action: notify.x
+        data:
+          title: Vaatwasser
+          message: >-
+            {% set t =
+            [((as_timestamp(states('sensor.014060393992006921_bsh_common_option_remainingprogramtime'),
+            0) - as_timestamp(now())) / 60) | int, 0] | max %}{% set u = t // 60
+            %}{% set m = t % 60 %}Resterend: {% if u > 0 %}{{ u }}u {% endif
+            %}{{ m }}m
+          data:
+            tag: vaatwasser
+            live_update: true
+            progress: >-
+              {{
+              states('sensor.014060393992006921_bsh_common_option_programprogress')
+              | int(0) }}
+            progress_max: 100
+            notification_icon: mdi:dishwasher
+            notification_icon_color: "#26C6DA"
+mode: restart
+max_exceeded: silent
