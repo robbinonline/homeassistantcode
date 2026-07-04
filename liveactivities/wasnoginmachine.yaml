@@ -1,0 +1,39 @@
+alias: Wasmachine - Was in machine Live Activity
+description: >-
+  Toont live activiteit als was nog in machine zit, verbergt als deur open is
+  geweest
+triggers:
+  - trigger: state
+    entity_id: input_boolean.wasklaareninmachine
+    to: "on"
+    id: was_in_machine
+  - trigger: state
+    entity_id: input_boolean.wasklaareninmachine
+    to: "off"
+    id: was_uitgehaald
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: was_in_machine
+        sequence:
+          - action: notify.x
+            data:
+              title: Wasmachine
+              message: De was zit nog in de machine!
+              data:
+                tag: wasnogindemachine
+                live_update: true
+                notification_icon: mdi:washing-machine
+                notification_icon_color: "#ff0000"
+      - conditions:
+          - condition: trigger
+            id: was_uitgehaald
+        sequence:
+          - action: notify.x
+            data:
+              message: clear_notification
+              data:
+                tag: wasnogindemachine
+mode: single
+max_exceeded: silent
